@@ -1,23 +1,19 @@
+using System.Windows.Forms;
+
 using Paletter;
 
 namespace ExampleWin32
 {
 	public partial class Main : Form
 	{
-		private enum Colors
-		{
-			Red,
-			Yellow,
-			Green,
-			LightBlue,
-			Blue
-		}
+		private ColorPaletter paletter = new();
 
-		private int GetColorIndex(Colors color) => (int)color;
-
-		// общее количество градаций цветов
-		private int lengthPalette = 50;
-		private readonly Color[] colors =
+		/// <summary>
+		/// общее количество градаций цветов
+		/// </summary>
+		private int lengthPalette;
+		private string label_availColorsText;
+		private static readonly Color[] defaultColors =
 		{
 			Color.FromArgb(255, 0, 0), // Красный
 			Color.FromArgb(255, 255, 0), // Желтый
@@ -25,44 +21,127 @@ namespace ExampleWin32
 			Color.FromArgb(0, 255, 255), // Голубой
 			Color.FromArgb(0, 0, 255) // Синий
 		};
-		List<Color> palette = null;
+		private List<Color> palette = new List<Color>();
+		private List<Color> customColors = defaultColors.ToList();
+		private List<TrackBar> trackBars = new List<TrackBar>();
 
 		public Main()
 		{
-			InitializeComponent();			
+			InitializeComponent();
+			label_availColorsText = label_availColors.Text;
 		}
 
 		private void Main_Load(object sender, EventArgs e)
 		{
-			trackBar_R.BackColor = colors[GetColorIndex(Colors.Red)];
-			trackBar_Y.BackColor = colors[GetColorIndex(Colors.Yellow)];
-			trackBar_G.BackColor = colors[GetColorIndex(Colors.Green)];
-			trackBar_LB.BackColor = colors[GetColorIndex(Colors.LightBlue)];
-			//trackBar_B.BackColor = colors[GetColorIndex(Colors.Blue)];
+			// чтобы ширина градации не была меньше одного пикселя на экране // иначе всё будет белое
+			nud_paletteLength.Maximum = palettePanel.Height;
+			
+			nud_paletteLength_ValueChanged(sender, e);
+			UpdateTrackList(customColors.ToList());
 		}
 
-		private void defaultOffsetPanel_Paint(object sender, PaintEventArgs e)
+		private void UpColorToList(Color color)
 		{
-			int correkt = 7;
-			int penWidth = defaultOffsetPanel.Height / lengthPalette;
-			int hof = (defaultOffsetPanel.Height / colors.Length) + (penWidth * 2);
-			Pen pen = new Pen(Color.Black, penWidth);
-			Graphics g = defaultOffsetPanel.CreateGraphics();
-			int thishof = correkt;
-			foreach (var item in colors)
+			UpdateAll();
+		}
+
+		private void DownColorToList(Color color)
+		{
+			UpdateAll();
+		}
+
+		private void AddColor(Color color)
+		{
+			if (ValidAvailColors())
 			{
-				g.DrawLine(pen, 0, thishof, defaultOffsetPanel.Width, thishof);
-				thishof += hof;
+				customColors.Add(color);
+				label_availColors.Text = label_availColorsText + GetAvailColorsCount();
+
+				UpdateAll();
 			}
-			pen.Dispose();
-			g.Dispose();
+			else
+				MessageBox.Show("Превышено количество цветов на текущую длину палитры");
+		}
+
+		private void RemoveColor(Color color)
+		{
+			customColors.Remove(color);
+			UpdateAll();
+		}
+
+		private void UpdateAll()
+		{
+			PalettePanelRefresh();
+			UpdateTrackList(customColors);
+		}
+
+		/// <summary>
+		/// возвращает количество активных цветов диапазон градиентов которых можно менять
+		/// </summary>
+		private int GetColorsCount() 
+			=> customColors.Count;
+
+		/// <summary>
+		/// возвращает количество цветов, которые ещё можно добавить
+		/// </summary>
+		private int GetAvailColorsCount() 
+			=> (lengthPalette / GetTrackMinMax()) - GetColorsCount();
+
+		/// <summary>
+		/// тру если можно добавить ещё цвет
+		/// </summary>
+		private bool ValidAvailColors() 
+			=> GetAvailColorsCount() > 0;
+
+		/// <summary>
+		/// получить единицу на которую можно изменить диапазон одного цвета
+		/// </summary>
+		private int GetTrackMinMax() 
+			=> lengthPalette / GetColorsCount();
+
+		private void PalettePanelRefresh()
+			=> palettePanel.Refresh();
+
+		private void UpdateTrackList(List<Color> colors)
+		{
+			bool isTrackEnable = true;
+
+			if (true)
+			{
+
+			}
+			trackBars.Clear();
+			for (int i = 0; i < colors.Count;)
+			{
+				TrackBar track = new TrackBar();
+				track.BackColor = colors[i];
+				track.Orientation = Orientation.Horizontal;
+				track.Enabled = isTrackEnable;
+				track.Tag = i++;
+				track.Minimum = -GetTrackMinMax();
+				track.Maximum = GetTrackMinMax();
+				track.SmallChange = 1;
+				track.LargeChange = 1;
+				track.ValueChanged += TrackBar_ValueChanged;
+				trackBars.Add(track);
+			}
+
+			panelTrackers.Controls.Clear();
+			int offfsetTracker = 0;
+			foreach (TrackBar track in trackBars)
+			{
+				track.Size = new Size(panelTrackers.Width - 18, track.Size.Height);
+				track.Location = new Point(0, offfsetTracker);
+				offfsetTracker += track.Size.Height;
+				panelTrackers.Controls.Add(track);
+			}
+			trackBars.Last().Enabled = false;
+			panelTrackers.Refresh();
 		}
 
 		private void rootPanel_Paint(object sender, PaintEventArgs e)
 		{
-			ColorPaletter paletter = new();
-
-			palette = paletter.GetColorsPalette(lengthPalette, setterGradLength, colors);
+			palette = paletter.GetColorsPalette(lengthPalette, setterGradLength, customColors.ToArray());
 			int heightRect = palettePanel.Height / lengthPalette;
 			int thisHeightRec = 0;
 
@@ -72,46 +151,50 @@ namespace ExampleWin32
 				thisHeightRec += heightRect;
 			}
 
+			#region OutInfo
+
 			string colorsOutStr = string.Empty;
 			foreach (int item in paletter.ConvertToDec(paletter.ConvertToHex(palette)))
 			{
 				colorsOutStr += $"{item}, ";
 			}
 
+			string trackOutStr = "|";
+			foreach (TrackBar track in trackBars)
+			{
+				trackOutStr += $" {track.Tag}: {track.Value} |";
+			}
+
 			colorInfo.Text = $"count: {palette.Count}" + Environment.NewLine +
-							 $"R: {tsVal_R} | Y: {tsVal_Y} | G: {tsVal_G} | LB: {tsVal_LB}" + Environment.NewLine +
+							 trackOutStr + Environment.NewLine +
 							 colorsOutStr;
+			#endregion
 		}
 
 		// корректирует диапазоны переходов цветов
 		// вызывается во время каждого перехода 
 		// принимает в параметр цвет с которого начинается текущий диапазон
-		private double setterGradLength(Color startColor)
+		private int setterGradLength(Color startColor)
 		{
-			// корректировка
-			int r = 0, y = 0, g = 0, lb = 0;
+			for (int i = 0; i < GetColorsCount() - 1;)
+			{
+				if (customColors[i] == startColor)
+				{
+					if (i == 2)
+					{
 
-			// уменьшаю диапазон зелёного
-			if (colors[GetColorIndex(Colors.Red)] == startColor)
-			{
-				return r - tsVal_R; // К -> Ж
+					}
+					if (i == 3)
+					{
+
+					}
+					var qwe = trackBars[i].Value;
+					return -qwe;
+					//return -trackBars[--i].Value;
+				}
+				i++;
 			}
-			if (colors[GetColorIndex(Colors.Yellow)] == startColor)
-			{
-				return y - tsVal_Y; // Ж -> З
-			}
-			if (colors[GetColorIndex(Colors.Green)] == startColor)
-			{
-				return g - tsVal_G; // З -> Г
-			}
-			if (colors[GetColorIndex(Colors.LightBlue)] == startColor)
-			{
-				return lb - tsVal_LB; // Г -> С
-			}
-			//if (colors[GetColorIndex(Colors.Blue)] == startColor)
-			//{
-			//	return tsVal_B; // Г -> С
-			//}
+
 			return 0;
 		}
 
@@ -127,31 +210,65 @@ namespace ExampleWin32
 			g.Dispose();
 		}
 
-		private int tsVal_R = 0,
-					tsVal_Y = 0,
-					tsVal_G = 0,
-					tsVal_LB = 0;
-		//tsVal_B = 0;
+		private Color ShowColorDialog()
+		{
+			ColorDialog cd = new ColorDialog();
+			cd.CustomColors = paletter.ConvertToDec(paletter.ConvertToHex(customColors)).ToArray();
+			cd.SolidColorOnly = true;
+			cd.FullOpen = true;
+			if (cd.ShowDialog() == DialogResult.OK)
+				return cd.Color;
+
+			return Color.Empty;
+		}
+
+		private void nud_paletteLength_ValueChanged(object sender, EventArgs e)
+		{
+			lengthPalette = (int)nud_paletteLength.Value;
+			UpdateAll();
+		}
+
 		private void TrackBar_ValueChanged(object sender, EventArgs e)
 		{
-			if (sender is TrackBar trackBar)
+			int sumVal = 0;
+			trackBars.ForEach(t => sumVal += t.Value);
+			if (sender is TrackBar trackBar && trackBar is not null)
 			{
-				string tag = trackBar.Tag as string;
-				int value = trackBar.Value;
-				switch (tag)
+				if ((int)trackBar.Tag == 3)
 				{
-					case "R": tsVal_R = value; break;
-					case "Y": tsVal_Y = value; break;
-					case "G": tsVal_G = value; break;
-					case "LB": tsVal_LB = value; break;
-						//case "B": tsVal_B = value; break;
+
 				}
 
-				if (lengthPalette < (tsVal_R + tsVal_Y + tsVal_G + tsVal_LB) + lengthPalette)
+				var qwe = trackBar.Value;
+
+				if (lengthPalette < sumVal + lengthPalette && trackBar.Minimum < trackBar.Value && trackBar.Maximum > trackBar.Value)
 					trackBar.Value -= 1;
-				 
+				else
+					PalettePanelRefresh();
 			}
-			palettePanel.Refresh();
+		}
+
+		private void btn_addColor_Click(object sender, EventArgs e)
+		{
+			if (ShowColorDialog() is Color color && color != Color.Empty)
+			{
+				AddColor(color);
+			}
+		}
+
+		private void btn_removeColor_Click(object sender, EventArgs e)
+		{
+			RemoveColor(Color.Empty);
+		}
+
+		private void btn_setUpPos_Click(object sender, EventArgs e)
+		{
+			UpColorToList(Color.Empty);
+		}
+
+		private void btn_setBottomPos_Click(object sender, EventArgs e)
+		{
+			DownColorToList(Color.Empty);
 		}
 	}
 }

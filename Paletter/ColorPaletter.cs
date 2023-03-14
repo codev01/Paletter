@@ -19,19 +19,15 @@ namespace Paletter
 		/// <param name="length"> Количество градаций </param>
 		/// <param name="colorStart"> Начальный цвет градиента </param>
 		/// <param name="colorEnd"> Конечный цвет градиента </param>
-		/// <param name="k"> -1 < k < 1 </param>
-		public List<Color> GetLinearGradientColors(double length, Color colorStart, Color colorEnd, double k = 0)
+		public List<Color> GetLinearGradientColors(double length, Color colorStart, Color colorEnd)
 		{
-			if (!(-1 <= k && k <= 1))
-				throw new InvalidOperationException("'k' меньше -1 или больше 1");
-
-			List<Color> colorsList = new List<Color>();
+			List<Color> colorsList = new List<Color>((int)length);
 
 			colorsList.Add(colorStart);
 
-			if (length > 2)
+			if (length > 0)
 			{
-				double step = MAX_RGB / (double)length + k;
+				double step = MAX_RGB / length;
 
 				double r = colorStart.R,
 					   g = colorStart.G,
@@ -58,18 +54,12 @@ namespace Paletter
 							b -= step;
 
 					Color color = Color.FromArgb((int)r, (int)g, (int)b);
-
-					if (colorsList.Count != 0)
-						if (colorsList.Last() == color)
-							// если так то надо править код, у меня нет времени на это
-							throw new Exception("GetLinearGradientColors() -> Такой цвет уже есть в списке! Что-то пошло не так!");
-
 					colorsList.Add(color);
 				}
 			}
+			else
+				throw new ArgumentException("'length' должно быть больше '0'");
 
-			if (colorsList.Last() != colorEnd)
-				colorsList.Add(colorEnd);
 
 			return colorsList;
 		}
@@ -77,43 +67,196 @@ namespace Paletter
 		/// <summary>
 		/// Получить список цветов палитры
 		/// </summary>
-		/// <param name="length"> Длина палитры </param>
-		/// <param name="setterGradLength"> Делегат, позволяющий менять длину отдельных переходов </param>
+		/// <param name="length"> 
+		/// Длина палитры
+		/// </param>
+		/// <param name="setterGradLength"> Делегат, позволяющий менять длину отдельных градаций </param>
 		/// <param name="colors"> Цвета, входящие в состав палитры </param>
-		public List<Color> GetColorsPalette(int length, Func<Color, double>? setterGradLength = null, params Color[] colors)
+		public List<Color> GetColorsPalette(int length, Func<Color, int>? setterGradLength = null, params Color[] colors)
 		{
-			List<Color> outGradient = new List<Color>(length);
+
+			//foreach (int value in GetValidValues(50, 49 /*length, colors.Length*/))
+			//{
+			//	length = value;
+			//	break;
+			//}
+
+
+			//if (length % colors.Length - 1 != 0) // ((double)54 / (double)4 - (double)0.5) * 4 = 52
+			//	length = (int)((double)length / (double)(colors.Length - 1) - (double)(length % colors.Length - 1)) * colors.Length;
+			List<Color> outPalette = new List<Color>(length);
 			Color colorStart = colors.First();
 			Color colorEnd = colors.Last();
+			int c1_c2_gradientLength = length / colors.Length;
 
-			outGradient.Add(colorStart);
-			for (int i = 0; i < colors.Length - 1;)
+			//outPalette.Add(colorStart);
+
+
+
+			//int[] valuesOffset = new int[colors.Length - 1];
+			//if (!ValidateValue(length, colors.Length))
+			//{
+			//	List<int> offsets = new List<int>();
+			//	int notAvailColorsCount = length - (c1_c2_gradientLength * colors.Length)/* + c1_c2_gradientLength - 1*/;
+
+
+			//	int j = 0;
+			//	List<int> naccOffsets = new List<int>();
+			//	for (int i = 0; i < length; i++)
+			//	{
+			//		if (j == colors.Length)
+			//			j = 1;
+
+			//		naccOffsets.Add(j++);
+			//	}
+
+			//	notAvailColorsCount = naccOffsets[length - colors.Length];
+
+			//	notAvailColorsCount += (length / colors.Length - 1);
+			//	int nacc = notAvailColorsCount;
+			//	//if (notAvailColorsCount <= colors.Length - 1)
+			//	//	notAvailColorsCount++;
+			//	int plus = 1;
+			//	for (int i = 0; i < colors.Length - 1; i++)
+			//	{
+			//		if (notAvailColorsCount != 0)
+			//		{
+			//			offsets.Add(1);
+			//			notAvailColorsCount--;
+			//		}
+			//		else
+			//			offsets.Add(0);
+			//	}
+			//	valuesOffset = offsets.Reverse<int>().ToArray();
+
+			//	if (nacc > colors.Length - 1)
+			//	{
+			//		valuesOffset[valuesOffset.Length - 1]++;
+			//	}
+			//	//if (notAvailColorsCount <= colors.Length - 1)
+			//	//	valuesOffset[valuesOffset.Length - 1]++;
+			//}
+			//else if (length != colors.Length)
+			//	valuesOffset[valuesOffset.Length - 1]++;
+
+			for (int i = 0; i < length; i++)
 			{
-				double thisColorGradLength = length / (colors.Length - 1);
-				Color c1 = colors[i];
-				Color c2 = colors[++i];
-				if (!(i < colors.Length - 1))
-				{
-					thisColorGradLength++;
-				}
 
-				double setter = thisColorGradLength;
-
-				if (setterGradLength != null)
-					setter = thisColorGradLength - setterGradLength(colors[i - 1]);
-
-				List<Color> twoColorsGrad = GetLinearGradientColors(setter, c1, c2, 0);
-
-				twoColorsGrad.Remove(twoColorsGrad.First());
-
-				foreach (Color color in twoColorsGrad)
-					outGradient.Add(color);
 			}
 
-			if (outGradient.Last() != colorEnd)
-				outGradient.Add(colorEnd);
+			int transCount = colors.Length - 1;
+			int plus = 0;
 
-			return outGradient;
+			List<int> test = new List<int>();
+
+			int f = 0;
+			for (int i = 0; i < length; i++)
+			{
+				if (f == colors.Length)
+				{
+					f = 1;
+					plus++;
+				}
+				test.Add(f++);
+			}
+			
+			int[] valuesOffset = new int[colors.Length - 1];
+			List<int> offsets = new List<int>();
+
+			int r = test.Last();
+			for (int i = 0; i < colors.Length - 1; i++)
+			{
+				if (r > i && r != 0)
+				{
+					//if (length - (c1_c2_gradientLength * colors.Length) != transCount)
+						offsets.Add(1);
+					//else
+					//	offsets.Add(length / colors.Length);
+					//r--;
+				}
+				else
+					offsets.Add(0);
+			}
+			valuesOffset = offsets.Reverse<int>().ToArray();
+
+			for (int i = 0; i < plus - 1; i++)
+			{
+				for (int k = 0; k < colors.Length - 1; k++)
+				{
+					valuesOffset[k] += 1;
+				}
+			}
+
+			for (int i = 0; i < colors.Length - 1;)
+			{
+				Color c1 = colors[i];
+				Color c2 = colors[++i];
+
+				//if (!(i < colors.Length - 1))
+				//{
+				//	c1_c2_gradientLength++;
+				//}
+
+				//if (c1_c2_gradientLength % 2 != 0)
+				//	c1_c2_gradientLength -= 1;
+
+				double setter = 1/*c1_c2_gradientLength*/;
+
+				//if (setterGradLength != null)
+				//	setter = c1_c2_gradientLength - setterGradLength(colors[i - 1]);
+
+				setter += valuesOffset[i - 1];
+
+				List<Color> c1_c2_gradient = GetLinearGradientColors(setter, c1, c2);
+
+				//c1_c2_gradient.Remove(c1_c2_gradient.First());
+				c1_c2_gradient.Remove(c1_c2_gradient.Last());
+
+				foreach (Color color in c1_c2_gradient)
+					outPalette.Add(color);
+			}
+
+			if (outPalette.Last() != colorEnd)
+				outPalette.Add(colorEnd);
+
+			//if (ValidateValue(length, colors.Length))
+			//	outPalette.Add(Color.Empty);
+
+			//if (outPalette.Count < length)
+			//	outPalette.Add(Color.Empty);
+
+			return outPalette;
+		}
+
+
+		/// <summary>
+		/// Получить массив делимых чисел
+		/// </summary>
+		/// <param name="isFirsBreak"> Получить только первое делимое значение </param>
+		/// <returns></returns>
+		public int[] GetValidValues(int length, int colorsCount, bool isFirsBreak = false)
+		{
+			List<int> values = new List<int>();
+			for (int i = length; length >= i && i > 0;)
+			{
+				if (ValidateValue(length, colorsCount))
+					values.Add(i--);
+				i -= i % colorsCount;
+
+				if(i == colorsCount)
+					return values.ToArray();
+
+				if (isFirsBreak)
+					break;
+			}
+			return values.ToArray();
+		}
+
+		public bool ValidateValue(int length, int colorsCount)
+		{
+			if (colorsCount > length)
+				throw new ArgumentException("Цветов больше чем длина палитры, сделай с собой что-нибудь");
+			return length % colorsCount == 0;
 		}
 
 		// return 0, если rgbNum < 0; 255, если rgbNum > 255; в остальных случаях rgbNum
