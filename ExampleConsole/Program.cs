@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 
 using Paletter;
 
@@ -22,7 +24,7 @@ internal class Program
 
 		ColorPaletter paletter = new();
 
-		colors10 = paletter.ConvertToDec(paletter.ConvertToHex(paletter.GetColorsPalette(length, setterGradLength, colors)));
+		colors10 = paletter.ConvertListColorsToDec(paletter.ConvertListColorsToHex(paletter.GetColorsPalette(length, setterGradLength, colors)));
 
 		for (int i = 0; i < colors10.Count;)
 		{
@@ -38,7 +40,7 @@ internal class Program
 	// корректирует диапазоны переходов цветов
 	// вызывается во время каждого перехода 
 	// принимает в параметр цвет с которого начинается текущий диапазон
-	static double setterGradLength(Color startColor)
+	static int setterGradLength(Color startColor, int index)
 	{
 		// корректировка
 		int r = -1, y = -3, g = 3, lb = 1;

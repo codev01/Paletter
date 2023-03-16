@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 
 namespace Paletter
 {
@@ -21,45 +24,44 @@ namespace Paletter
 		/// <param name="colorEnd"> Конечный цвет градиента </param>
 		public List<Color> GetLinearGradientColors(double length, Color colorStart, Color colorEnd)
 		{
-			List<Color> colorsList = new List<Color>((int)length);
+			if (length < 0)
+				length = 2;
 
+			List<Color> colorsList = new List<Color>((int)length);
 			colorsList.Add(colorStart);
 
-			if (length > 0)
+			double step = MAX_RGB / length;
+
+			double r = colorStart.R,
+				   g = colorStart.G,
+				   b = colorStart.B;
+
+			for (double i = 0; i < length; i++)
 			{
-				double step = MAX_RGB / length;
+				if (r != colorEnd.R)
+					if (r < colorEnd.R)
+						r += step;
+					else
+						r -= step;
 
-				double r = colorStart.R,
-					   g = colorStart.G,
-					   b = colorStart.B;
+				if (g != colorEnd.G)
+					if (g < colorEnd.G)
+						g += step;
+					else
+						g -= step;
 
-				for (double i = 0; i < length; i++)
-				{
-					if (r != colorEnd.R)
-						if (r < colorEnd.R)
-							r += step;
-						else
-							r -= step;
+				if (b != colorEnd.B)
+					if (b < colorEnd.B)
+						b += step;
+					else
+						b -= step;
 
-					if (g != colorEnd.G)
-						if (g < colorEnd.G)
-							g += step;
-						else
-							g -= step;
+				Color color = Color.FromArgb(_fixMaxMin((int)r),
+											 _fixMaxMin((int)g),
+											 _fixMaxMin((int)b));
 
-					if (b != colorEnd.B)
-						if (b < colorEnd.B)
-							b += step;
-						else
-							b -= step;
-
-					Color color = Color.FromArgb((int)r, (int)g, (int)b);
-					colorsList.Add(color);
-				}
+				colorsList.Add(color);
 			}
-			else
-				throw new ArgumentException("'length' должно быть больше '0'");
-
 
 			return colorsList;
 		}
@@ -70,193 +72,78 @@ namespace Paletter
 		/// <param name="length"> 
 		/// Длина палитры
 		/// </param>
-		/// <param name="setterGradLength"> Делегат, позволяющий менять длину отдельных градаций </param>
+		/// <param name="setterGradientLength"> Делегат, позволяющий менять длину отдельных градаций </param>
 		/// <param name="colors"> Цвета, входящие в состав палитры </param>
-		public List<Color> GetColorsPalette(int length, Func<Color, int>? setterGradLength = null, params Color[] colors)
+		public List<Color> GetColorsPalette(int length, Func<Color, int, int>? setterGradientLength = null, params Color[] colors)
 		{
+			if (length < colors.Length || length < 0)
+				length = colors.Length;
 
-			//foreach (int value in GetValidValues(50, 49 /*length, colors.Length*/))
-			//{
-			//	length = value;
-			//	break;
-			//}
-
-
-			//if (length % colors.Length - 1 != 0) // ((double)54 / (double)4 - (double)0.5) * 4 = 52
-			//	length = (int)((double)length / (double)(colors.Length - 1) - (double)(length % colors.Length - 1)) * colors.Length;
 			List<Color> outPalette = new List<Color>(length);
-			Color colorStart = colors.First();
 			Color colorEnd = colors.Last();
-			int c1_c2_gradientLength = length / colors.Length;
+			int transCount = colors.Length - 1,
+					  plus = 0,
+					  step = 0;
 
-			//outPalette.Add(colorStart);
-
-
-
-			//int[] valuesOffset = new int[colors.Length - 1];
-			//if (!ValidateValue(length, colors.Length))
-			//{
-			//	List<int> offsets = new List<int>();
-			//	int notAvailColorsCount = length - (c1_c2_gradientLength * colors.Length)/* + c1_c2_gradientLength - 1*/;
-
-
-			//	int j = 0;
-			//	List<int> naccOffsets = new List<int>();
-			//	for (int i = 0; i < length; i++)
-			//	{
-			//		if (j == colors.Length)
-			//			j = 1;
-
-			//		naccOffsets.Add(j++);
-			//	}
-
-			//	notAvailColorsCount = naccOffsets[length - colors.Length];
-
-			//	notAvailColorsCount += (length / colors.Length - 1);
-			//	int nacc = notAvailColorsCount;
-			//	//if (notAvailColorsCount <= colors.Length - 1)
-			//	//	notAvailColorsCount++;
-			//	int plus = 1;
-			//	for (int i = 0; i < colors.Length - 1; i++)
-			//	{
-			//		if (notAvailColorsCount != 0)
-			//		{
-			//			offsets.Add(1);
-			//			notAvailColorsCount--;
-			//		}
-			//		else
-			//			offsets.Add(0);
-			//	}
-			//	valuesOffset = offsets.Reverse<int>().ToArray();
-
-			//	if (nacc > colors.Length - 1)
-			//	{
-			//		valuesOffset[valuesOffset.Length - 1]++;
-			//	}
-			//	//if (notAvailColorsCount <= colors.Length - 1)
-			//	//	valuesOffset[valuesOffset.Length - 1]++;
-			//}
-			//else if (length != colors.Length)
-			//	valuesOffset[valuesOffset.Length - 1]++;
-
+			List<int> roadMap = new List<int>();
 			for (int i = 0; i < length; i++)
 			{
-
-			}
-
-			int transCount = colors.Length - 1;
-			int plus = 0;
-
-			List<int> test = new List<int>();
-
-			int f = 0;
-			for (int i = 0; i < length; i++)
-			{
-				if (f == colors.Length)
+				if (step == colors.Length)
 				{
-					f = 1;
+					step = 1;
 					plus++;
 				}
-				test.Add(f++);
+				roadMap.Add(step++);
 			}
-			
-			int[] valuesOffset = new int[colors.Length - 1];
-			List<int> offsets = new List<int>();
 
-			int r = test.Last();
-			for (int i = 0; i < colors.Length - 1; i++)
+			int[] valuesOffset = new int[transCount];
+			if (length != colors.Length)
 			{
-				if (r > i && r != 0)
+				List<int> offsets = new List<int>();
+
+				int r = roadMap.Last();
+				for (int i = 0; i < transCount; i++)
 				{
-					//if (length - (c1_c2_gradientLength * colors.Length) != transCount)
+					if (r > i && r != 0)
 						offsets.Add(1);
-					//else
-					//	offsets.Add(length / colors.Length);
-					//r--;
+					else
+						offsets.Add(0);
 				}
-				else
-					offsets.Add(0);
-			}
-			valuesOffset = offsets.Reverse<int>().ToArray();
+				valuesOffset = offsets.Reverse<int>().ToArray();
 
-			for (int i = 0; i < plus - 1; i++)
-			{
-				for (int k = 0; k < colors.Length - 1; k++)
+				for (int i = 0; i < plus - 1; i++)
 				{
-					valuesOffset[k] += 1;
+					for (int ii = 0; ii < transCount; ii++)
+					{
+						valuesOffset[ii] += 1;
+					}
 				}
 			}
 
-			for (int i = 0; i < colors.Length - 1;)
+			for (int i = 0; i < transCount;)
 			{
 				Color c1 = colors[i];
 				Color c2 = colors[++i];
 
-				//if (!(i < colors.Length - 1))
-				//{
-				//	c1_c2_gradientLength++;
-				//}
-
-				//if (c1_c2_gradientLength % 2 != 0)
-				//	c1_c2_gradientLength -= 1;
-
-				double setter = 1/*c1_c2_gradientLength*/;
-
-				//if (setterGradLength != null)
-				//	setter = c1_c2_gradientLength - setterGradLength(colors[i - 1]);
+				int setter = 1;
 
 				setter += valuesOffset[i - 1];
+				if (setterGradientLength is not null)
+					setter -= setterGradientLength(c1, i - 1);
 
 				List<Color> c1_c2_gradient = GetLinearGradientColors(setter, c1, c2);
 
-				//c1_c2_gradient.Remove(c1_c2_gradient.First());
 				c1_c2_gradient.Remove(c1_c2_gradient.Last());
 
 				foreach (Color color in c1_c2_gradient)
 					outPalette.Add(color);
 			}
 
-			if (outPalette.Last() != colorEnd)
-				outPalette.Add(colorEnd);
-
-			//if (ValidateValue(length, colors.Length))
-			//	outPalette.Add(Color.Empty);
-
-			//if (outPalette.Count < length)
-			//	outPalette.Add(Color.Empty);
+			if (outPalette.Count > 0)
+				if (outPalette.Last() != colorEnd)
+					outPalette.Add(colorEnd);
 
 			return outPalette;
-		}
-
-
-		/// <summary>
-		/// Получить массив делимых чисел
-		/// </summary>
-		/// <param name="isFirsBreak"> Получить только первое делимое значение </param>
-		/// <returns></returns>
-		public int[] GetValidValues(int length, int colorsCount, bool isFirsBreak = false)
-		{
-			List<int> values = new List<int>();
-			for (int i = length; length >= i && i > 0;)
-			{
-				if (ValidateValue(length, colorsCount))
-					values.Add(i--);
-				i -= i % colorsCount;
-
-				if(i == colorsCount)
-					return values.ToArray();
-
-				if (isFirsBreak)
-					break;
-			}
-			return values.ToArray();
-		}
-
-		public bool ValidateValue(int length, int colorsCount)
-		{
-			if (colorsCount > length)
-				throw new ArgumentException("Цветов больше чем длина палитры, сделай с собой что-нибудь");
-			return length % colorsCount == 0;
 		}
 
 		// return 0, если rgbNum < 0; 255, если rgbNum > 255; в остальных случаях rgbNum
@@ -272,7 +159,7 @@ namespace Paletter
 
 		#region Converters
 
-		public List<string> ConvertToHex(List<Color> ColorsList)
+		public List<string> ConvertListColorsToHex(List<Color> ColorsList)
 		{
 			List<string> colorsList = new List<string>(ColorsList.Count);
 			foreach (Color color in ColorsList)
@@ -290,23 +177,43 @@ namespace Paletter
 			_fixMaxMin(ref r);
 			_fixMaxMin(ref g);
 			_fixMaxMin(ref b);
-			return r.ToString("X2") + b.ToString("X2") + b.ToString("X2");
+			return ConvertColorToHex(r, g, b);
 		}
 
-		string ConvertColorToHex(Color c) =>
-			c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+		string ConvertColorToHex(Color color) =>
+			ConvertColorToHex(color.R, color.G, color.B);
 
-		public List<int> ConvertToDec(List<string> hexColorsList)
+		public List<int> ConvertListColorsToDec(List<string> hexColors)
 		{
-			List<int> decColorsList = new List<int>(hexColorsList.Count);
-			foreach (string hex in hexColorsList)
-			{
-				decColorsList.Add(int.Parse(hex, System.Globalization.NumberStyles.HexNumber));
-			}
+			List<int> decColorsList = new List<int>(hexColors.Count);
+			foreach (string hex in hexColors)
+				decColorsList.Add(ConvertColorToDec(hex));
 			return decColorsList;
 		}
 
-		int ConvertColorToDec(int r, int g, int b) =>
+		public List<int> ConvertListColorsToDec(List<Color> colors)
+		{
+			List<int> decColorsList = new List<int>(colors.Count);
+			foreach (Color color in colors)
+				decColorsList.Add(ConvertColorToDec(color));
+			return decColorsList;
+		}
+
+		public int[] ConvertListColorsToOle(List<Color> colors)
+		{
+			List<int> decColorsList = new List<int>(colors.Count);
+			foreach (Color color in colors)
+				decColorsList.Add(ColorTranslator.ToOle(color));
+			return decColorsList.ToArray();
+		}		
+
+		public int ConvertColorToDec(Color color) =>
+			int.Parse(ConvertColorToHex(color), System.Globalization.NumberStyles.HexNumber);
+
+		public int ConvertColorToDec(string hex) =>
+			int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
+
+		public int ConvertColorToDec(int r, int g, int b) =>
 			int.Parse(ConvertColorToHex(Color.FromArgb(_fixMaxMin(r), _fixMaxMin(g), _fixMaxMin(b))), System.Globalization.NumberStyles.HexNumber);
 
 		#endregion

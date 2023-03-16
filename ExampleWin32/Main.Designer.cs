@@ -1,4 +1,6 @@
-﻿namespace ExampleWin32
+﻿using System.Windows.Forms;
+
+namespace ExampleWin32
 {
 	partial class Main
 	{
@@ -36,7 +38,9 @@
 			this.btn_removeColor = new System.Windows.Forms.Button();
 			this.btn_setUpPos = new System.Windows.Forms.Button();
 			this.btn_setBottomPos = new System.Windows.Forms.Button();
-			this.label_availColors = new System.Windows.Forms.Label();
+			this.btn_editColor = new System.Windows.Forms.Button();
+			this.lable_colorsCount = new System.Windows.Forms.Label();
+			this.btn_reset = new System.Windows.Forms.Button();
 			((System.ComponentModel.ISupportInitialize)(this.nud_paletteLength)).BeginInit();
 			this.SuspendLayout();
 			// 
@@ -49,31 +53,33 @@
 			this.palettePanel.Name = "palettePanel";
 			this.palettePanel.Size = new System.Drawing.Size(120, 700);
 			this.palettePanel.TabIndex = 0;
-			this.palettePanel.Paint += new System.Windows.Forms.PaintEventHandler(this.rootPanel_Paint);
+			this.palettePanel.Paint += new System.Windows.Forms.PaintEventHandler(this.RootPanel_Paint);
 			// 
 			// colorInfo
 			// 
+			this.colorInfo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.colorInfo.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-			this.colorInfo.Location = new System.Drawing.Point(140, 428);
-			this.colorInfo.Margin = new System.Windows.Forms.Padding(20);
+			this.colorInfo.Location = new System.Drawing.Point(143, 428);
+			this.colorInfo.Margin = new System.Windows.Forms.Padding(5);
 			this.colorInfo.Multiline = true;
 			this.colorInfo.Name = "colorInfo";
-			this.colorInfo.Size = new System.Drawing.Size(272, 243);
+			this.colorInfo.Size = new System.Drawing.Size(269, 258);
 			this.colorInfo.TabIndex = 6;
 			this.colorInfo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			// 
 			// panelTrackers
 			// 
 			this.panelTrackers.AutoScroll = true;
-			this.panelTrackers.Location = new System.Drawing.Point(140, 29);
-			this.panelTrackers.Margin = new System.Windows.Forms.Padding(20, 20, 3, 3);
+			this.panelTrackers.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.panelTrackers.Location = new System.Drawing.Point(143, 31);
+			this.panelTrackers.Margin = new System.Windows.Forms.Padding(5);
 			this.panelTrackers.Name = "panelTrackers";
-			this.panelTrackers.Size = new System.Drawing.Size(272, 359);
+			this.panelTrackers.Size = new System.Drawing.Size(269, 357);
 			this.panelTrackers.TabIndex = 7;
 			// 
 			// nud_paletteLength
 			// 
-			this.nud_paletteLength.Location = new System.Drawing.Point(120, 0);
+			this.nud_paletteLength.Location = new System.Drawing.Point(143, 0);
 			this.nud_paletteLength.Margin = new System.Windows.Forms.Padding(0);
 			this.nud_paletteLength.Maximum = new decimal(new int[] {
             1000,
@@ -85,7 +91,7 @@
 			this.nud_paletteLength.TabIndex = 8;
 			this.nud_paletteLength.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			this.nud_paletteLength.Value = new decimal(new int[] {
-            7,
+            50,
             0,
             0,
             0});
@@ -93,7 +99,7 @@
 			// 
 			// btn_addColor
 			// 
-			this.btn_addColor.Location = new System.Drawing.Point(256, 394);
+			this.btn_addColor.Location = new System.Drawing.Point(175, 394);
 			this.btn_addColor.Name = "btn_addColor";
 			this.btn_addColor.Size = new System.Drawing.Size(75, 23);
 			this.btn_addColor.TabIndex = 9;
@@ -103,7 +109,8 @@
 			// 
 			// btn_removeColor
 			// 
-			this.btn_removeColor.Location = new System.Drawing.Point(337, 394);
+			this.btn_removeColor.Enabled = false;
+			this.btn_removeColor.Location = new System.Drawing.Point(256, 394);
 			this.btn_removeColor.Name = "btn_removeColor";
 			this.btn_removeColor.Size = new System.Drawing.Size(75, 23);
 			this.btn_removeColor.TabIndex = 10;
@@ -113,8 +120,9 @@
 			// 
 			// btn_setUpPos
 			// 
+			this.btn_setUpPos.Enabled = false;
 			this.btn_setUpPos.Font = new System.Drawing.Font("Segoe UI Black", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-			this.btn_setUpPos.Location = new System.Drawing.Point(418, 154);
+			this.btn_setUpPos.Location = new System.Drawing.Point(412, 154);
 			this.btn_setUpPos.Name = "btn_setUpPos";
 			this.btn_setUpPos.Size = new System.Drawing.Size(25, 50);
 			this.btn_setUpPos.TabIndex = 11;
@@ -125,8 +133,9 @@
 			// 
 			// btn_setBottomPos
 			// 
+			this.btn_setBottomPos.Enabled = false;
 			this.btn_setBottomPos.Font = new System.Drawing.Font("Segoe UI Black", 20F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-			this.btn_setBottomPos.Location = new System.Drawing.Point(418, 210);
+			this.btn_setBottomPos.Location = new System.Drawing.Point(412, 210);
 			this.btn_setBottomPos.Name = "btn_setBottomPos";
 			this.btn_setBottomPos.Size = new System.Drawing.Size(25, 50);
 			this.btn_setBottomPos.TabIndex = 12;
@@ -135,21 +144,45 @@
 			this.btn_setBottomPos.UseVisualStyleBackColor = true;
 			this.btn_setBottomPos.Click += new System.EventHandler(this.btn_setBottomPos_Click);
 			// 
-			// label_availColors
+			// btn_editColor
 			// 
-			this.label_availColors.AutoSize = true;
-			this.label_availColors.Location = new System.Drawing.Point(161, 2);
-			this.label_availColors.Name = "label_availColors";
-			this.label_availColors.Size = new System.Drawing.Size(127, 15);
-			this.label_availColors.TabIndex = 13;
-			this.label_availColors.Text = "Availible colors count: ";
+			this.btn_editColor.Enabled = false;
+			this.btn_editColor.Location = new System.Drawing.Point(337, 394);
+			this.btn_editColor.Name = "btn_editColor";
+			this.btn_editColor.Size = new System.Drawing.Size(75, 23);
+			this.btn_editColor.TabIndex = 13;
+			this.btn_editColor.Text = "Edit";
+			this.btn_editColor.UseVisualStyleBackColor = true;
+			this.btn_editColor.Click += new System.EventHandler(this.btn_editColor_Click);
+			// 
+			// lable_colorsCount
+			// 
+			this.lable_colorsCount.AutoSize = true;
+			this.lable_colorsCount.Location = new System.Drawing.Point(184, 2);
+			this.lable_colorsCount.Name = "lable_colorsCount";
+			this.lable_colorsCount.Size = new System.Drawing.Size(45, 15);
+			this.lable_colorsCount.TabIndex = 14;
+			this.lable_colorsCount.Text = "colors: ";
+			this.lable_colorsCount.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// btn_reset
+			// 
+			this.btn_reset.Location = new System.Drawing.Point(337, 0);
+			this.btn_reset.Name = "btn_reset";
+			this.btn_reset.Size = new System.Drawing.Size(75, 23);
+			this.btn_reset.TabIndex = 15;
+			this.btn_reset.Text = "Reset";
+			this.btn_reset.UseVisualStyleBackColor = true;
+			this.btn_reset.Click += new System.EventHandler(this.btn_reset_Click);
 			// 
 			// Main
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(449, 700);
-			this.Controls.Add(this.label_availColors);
+			this.ClientSize = new System.Drawing.Size(437, 700);
+			this.Controls.Add(this.btn_reset);
+			this.Controls.Add(this.lable_colorsCount);
+			this.Controls.Add(this.btn_editColor);
 			this.Controls.Add(this.btn_setBottomPos);
 			this.Controls.Add(this.btn_setUpPos);
 			this.Controls.Add(this.btn_removeColor);
@@ -179,6 +212,8 @@
 		private Button btn_removeColor;
 		private Button btn_setUpPos;
 		private Button btn_setBottomPos;
-		private Label label_availColors;
+		private Button btn_editColor;
+		private Label lable_colorsCount;
+		private Button btn_reset;
 	}
 }
