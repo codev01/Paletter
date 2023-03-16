@@ -7,7 +7,7 @@
 
 Пример:
 
-![preview](attachments\README\Images\preview.png)
+![preview](attachments/README/Images/preview.png)
 
 #
 
