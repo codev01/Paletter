@@ -169,20 +169,6 @@ namespace Paletter
 			return colorsList;
 		}
 
-		public string ConvertColorToHex(byte r, byte g, byte b) =>
-			r.ToString("X2") + b.ToString("X2") + b.ToString("X2");
-
-		public string ConvertColorToHex(int r, int g, int b)
-		{
-			_fixMaxMin(ref r);
-			_fixMaxMin(ref g);
-			_fixMaxMin(ref b);
-			return ConvertColorToHex(r, g, b);
-		}
-
-		string ConvertColorToHex(Color color) =>
-			ConvertColorToHex(color.R, color.G, color.B);
-
 		public List<int> ConvertListColorsToDec(List<string> hexColors)
 		{
 			List<int> decColorsList = new List<int>(hexColors.Count);
@@ -205,16 +191,30 @@ namespace Paletter
 			foreach (Color color in colors)
 				decColorsList.Add(ColorTranslator.ToOle(color));
 			return decColorsList.ToArray();
-		}		
+		}
 
-		public int ConvertColorToDec(Color color) =>
-			int.Parse(ConvertColorToHex(color), System.Globalization.NumberStyles.HexNumber);
+		string ConvertColorToHex(Color color) =>
+			ColorTranslator.ToHtml(color).Substring(1);
+
+		public string ConvertColorToHex(byte r, byte g, byte b) =>
+			ColorTranslator.ToHtml(Color.FromArgb(r, g, b)).Substring(1);
+
+		public string ConvertColorToHex(int r, int g, int b)
+		{
+			_fixMaxMin(ref r);
+			_fixMaxMin(ref g);
+			_fixMaxMin(ref b);
+			return ConvertColorToHex(r, g, b);
+		}
+
+		public int ConvertColorToDec(Color color) 
+			=> ConvertColorToDec(ConvertColorToHex(color));
 
 		public int ConvertColorToDec(string hex) =>
 			int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
 
 		public int ConvertColorToDec(int r, int g, int b) =>
-			int.Parse(ConvertColorToHex(Color.FromArgb(_fixMaxMin(r), _fixMaxMin(g), _fixMaxMin(b))), System.Globalization.NumberStyles.HexNumber);
+			ConvertColorToDec(ConvertColorToHex(_fixMaxMin(r), _fixMaxMin(g), _fixMaxMin(b)));
 
 		#endregion
 	}

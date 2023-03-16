@@ -248,7 +248,7 @@ namespace ExampleWin32
 				#region OutInfo
 
 				string colorsOutStr = string.Empty;
-				foreach (int item in _paletter.ConvertListColorsToDec(_paletter.ConvertListColorsToHex(_palette)))
+				foreach (int item in _paletter.ConvertListColorsToDec(_palette))
 				{
 					colorsOutStr += $"{item}, ";
 				}
