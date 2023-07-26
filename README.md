@@ -14,6 +14,8 @@
 ![](https://img.shields.io/badge/.NET%20version-5.0-512BD4?logo=.net)
 
 ![preview](attachments/README/Images/preview.png)
+### Как выглядит сам алгоритм
+![preview](attachments/README/Images/algorithm.png)
 
 ## Примеры использования
 В качестве примера использования "Paletter" было создано два приложения: на [Win32](https://github.com/codev01/Paletter/tree/master/ExampleWin32) и [консольное](https://github.com/codev01/Paletter/tree/master/ExampleConsole).
